@@ -128,6 +128,27 @@ void applyWifiPowerSave()
         WiFi.setSleep(wifiPowerSave ? WIFI_PS_MIN_MODEM : WIFI_PS_NONE);
 }
 
+// Pulls data into radioBuf's ring buffer until it reaches targetBytes or
+// maxWaitMs elapses, whichever comes first. Called right after opening the
+// stream and before handing it to the codec, so playback starts with a
+// cushion instead of racing the network from byte zero.
+void primeRadioBuffer(uint32_t targetBytes, unsigned long maxWaitMs)
+{
+    if (!radioBuf)
+        return;
+    showHdrMsg("BUFFERING...");
+    unsigned long start = millis();
+    while (millis() - start < maxWaitMs)
+    {
+        radioBuf->loop();
+        if (radioBuf->getFillLevel() >= targetBytes)
+            break;
+        delay(5);
+    }
+    RDBG("[RADIO] prebuffered %luK in %lums\n",
+         (unsigned long)(radioBuf->getFillLevel() / 1024), millis() - start);
+}
+
 void startRadioStream(int idx)
 {
     if (!wifiConnected || idx < 0 || idx >= radioCount)
@@ -169,6 +190,8 @@ void startRadioStream(int idx)
 
     bool started = false;
 
+    primeRadioBuffer(RADIO_PREBUFFER_TARGET, RADIO_PREBUFFER_MAX_WAIT_MS);
+
     if (loUrl.endsWith(".aac") || loUrl.indexOf("aac") > 0 || loUrl.indexOf("m4a") > 0 || radioForceAac)
     {
         aac = new AudioGeneratorAAC();
@@ -201,6 +224,7 @@ void startRadioStream(int idx)
             httpSrc = new AudioFileSourceHTTPSStream(url.c_str());
             static_cast<AudioFileSourceHTTPSStream *>(httpSrc)->SetReconnect(STREAM_RECONNECT_TRIES, STREAM_RECONNECT_DELAY_MS);
             radioBuf = new AudioFileSourceBuffer(httpSrc, RADIO_HTTP_BUF);
+            primeRadioBuffer(RADIO_PREBUFFER_TARGET, RADIO_PREBUFFER_MAX_WAIT_MS);
 
             aac = new AudioGeneratorAAC();
             started = aac->begin(radioBuf, output);

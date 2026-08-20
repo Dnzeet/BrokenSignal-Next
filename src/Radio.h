@@ -9,6 +9,7 @@ void purgeRadioMemory();
 void startRadioStream(int idx);
 void stopRadioStream();
 void pumpRadioAudio();
+void primeRadioBuffer(uint32_t targetBytes, unsigned long maxWaitMs);
 void scheduleRadioReconnect(int idx);
 void cancelRadioReconnect();
 void radioScrollEnsureVisible();
