@@ -935,6 +935,20 @@ void drawRadioHeader()
     D.fillRect(0, 0, SCREEN_W, HEADER_H, T->hdrBg);
 
     String wifiStatus = wifiConnected ? wifiSSID : "NOT CONNECTED";
+    if (wifiConnected)
+    {
+        // Coarse signal-quality indicator so a weak connection is visible
+        // before the stream actually drops. Uses the same RSSI thresholds
+        // as the debug overlay.
+        int rssi = WiFi.RSSI();
+        const char *sig = (rssi >= -55)   ? "||||"
+                           : (rssi >= -65) ? "|||."
+                           : (rssi >= -75) ? "||.."
+                           : (rssi >= -85) ? "|..."
+                                           : "....";
+        wifiStatus += " ";
+        wifiStatus += sig;
+    }
     if ((int)wifiStatus.length() > 20)
         wifiStatus = wifiStatus.substring(0, 19) + ">";
 

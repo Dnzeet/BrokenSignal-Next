@@ -56,6 +56,13 @@ extern int radioSelected;
 extern int radioScrollTop;
 extern int radioPlaying;
 extern bool radioIsPlaying;
+
+// App-level auto-reconnect state (see RADIO_AUTO_RECONNECT_MAX in Config.h)
+extern bool radioReconnectPending;
+extern int radioReconnectIdx;
+extern int radioReconnectAttempt;
+extern unsigned long radioReconnectAtMs;
+
 extern AudioFileSource *httpSrc;
 extern AudioFileSourceBuffer *radioBuf;
 extern AudioGeneratorMP3 *radioMp3;

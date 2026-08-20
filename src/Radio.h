@@ -9,6 +9,8 @@ void purgeRadioMemory();
 void startRadioStream(int idx);
 void stopRadioStream();
 void pumpRadioAudio();
+void scheduleRadioReconnect(int idx);
+void cancelRadioReconnect();
 void radioScrollEnsureVisible();
 void scanWifiNetworks();
 bool connectWifi(const String &ssid, const String &pass);
