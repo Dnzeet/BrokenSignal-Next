@@ -42,6 +42,11 @@ int radioScrollTop = 0;
 int radioPlaying = -1;
 bool radioIsPlaying = false;
 bool radioForceAac = false;
+
+bool radioReconnectPending = false;
+int radioReconnectIdx = -1;
+int radioReconnectAttempt = 0;
+unsigned long radioReconnectAtMs = 0;
 AudioFileSource *httpSrc = nullptr;
 AudioFileSourceBuffer *radioBuf = nullptr;
 AudioGeneratorMP3 *radioMp3 = nullptr;

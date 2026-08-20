@@ -156,7 +156,7 @@ void startRadioStream(int idx)
         drawRadioAll();
         return;
     }
-    static_cast<AudioFileSourceHTTPSStream *>(httpSrc)->SetReconnect(true, 0);
+    static_cast<AudioFileSourceHTTPSStream *>(httpSrc)->SetReconnect(STREAM_RECONNECT_TRIES, STREAM_RECONNECT_DELAY_MS);
     radioBuf = new AudioFileSourceBuffer(httpSrc, RADIO_HTTP_BUF);
     if (!radioBuf)
     {
@@ -199,7 +199,7 @@ void startRadioStream(int idx)
 
             // Use the fixed class for both HTTP and HTTPS
             httpSrc = new AudioFileSourceHTTPSStream(url.c_str());
-            static_cast<AudioFileSourceHTTPSStream *>(httpSrc)->SetReconnect(true, 0);
+            static_cast<AudioFileSourceHTTPSStream *>(httpSrc)->SetReconnect(STREAM_RECONNECT_TRIES, STREAM_RECONNECT_DELAY_MS);
             radioBuf = new AudioFileSourceBuffer(httpSrc, RADIO_HTTP_BUF);
 
             aac = new AudioGeneratorAAC();
@@ -242,6 +242,46 @@ void startRadioStream(int idx)
     drawRadioStatus();
 }
 
+// Cancels any pending auto-reconnect and resets the backoff counter. Call this
+// on any deliberate user action (manual play/stop/select/exit) so a fresh
+// action always starts a clean backoff sequence.
+void cancelRadioReconnect()
+{
+    radioReconnectPending = false;
+    radioReconnectAttempt = 0;
+}
+
+// Called when the stream drops mid-playback. Schedules another attempt with
+// exponential backoff, up to RADIO_AUTO_RECONNECT_MAX tries, then gives up.
+void scheduleRadioReconnect(int idx)
+{
+    if (idx < 0 || !wifiConnected)
+    {
+        radioReconnectPending = false;
+        showHdrMsg("STREAM LOST");
+        return;
+    }
+
+    radioReconnectAttempt++;
+    if (radioReconnectAttempt > RADIO_AUTO_RECONNECT_MAX)
+    {
+        radioReconnectPending = false;
+        showHdrMsg("STREAM LOST");
+        RDBG("[RADIO] auto-reconnect gave up after %d tries\n", RADIO_AUTO_RECONNECT_MAX);
+        return;
+    }
+
+    radioReconnectIdx = idx;
+    radioReconnectPending = true;
+    unsigned long backoffMs = 1000UL << min(radioReconnectAttempt - 1, 4); // 1,2,4,8,16s cap
+    radioReconnectAtMs = millis() + backoffMs;
+
+    char buf[24];
+    snprintf(buf, sizeof(buf), "RECONNECT %d/%d", radioReconnectAttempt, RADIO_AUTO_RECONNECT_MAX);
+    showHdrMsg(buf);
+    RDBG("[RADIO] scheduling reconnect attempt %d in %lums\n", radioReconnectAttempt, backoffMs);
+}
+
 void stopRadioStream()
 {
     if (radioMp3)
@@ -280,7 +320,26 @@ void stopRadioStream()
 void pumpRadioAudio()
 {
     if (!radioIsPlaying)
+    {
+        // Not currently playing: if an auto-reconnect is scheduled and its
+        // backoff delay has elapsed, retry now.
+        if (webRadioMode && radioReconnectPending && millis() >= radioReconnectAtMs)
+        {
+            int idx = radioReconnectIdx;
+            radioReconnectPending = false;
+            startRadioStream(idx);
+            if (radioIsPlaying)
+            {
+                cancelRadioReconnect();
+                showHdrMsg("RECONNECTED");
+            }
+            else
+            {
+                scheduleRadioReconnect(idx);
+            }
+        }
         return;
+    }
 
     if (radioBuf)
         radioBuf->loop();
@@ -293,8 +352,8 @@ void pumpRadioAudio()
     {
         int oldPlaying = radioPlaying;
         stopRadioStream();
-        showHdrMsg("STREAM LOST");
         RDBG("[RADIO] STREAM LOST (gen stopped)\n");
+        scheduleRadioReconnect(oldPlaying);
         if (oldPlaying >= 0)
             drawRadioRow(oldPlaying);
         drawRadioHeader();
@@ -645,6 +704,10 @@ void handleOverlayInput(Keyboard_Class::KeysState &ks)
 
 void handleRadioInput(Keyboard_Class::KeysState &ks)
 {
+    // Any manual keypress in radio mode cancels a pending auto-reconnect and
+    // resets its backoff, so the next drop starts a fresh retry sequence.
+    cancelRadioReconnect();
+
     if (ks.del)
     {
         exitWebRadioMode();
@@ -804,6 +867,7 @@ void handleRadioInput(Keyboard_Class::KeysState &ks)
 
 void enterWebRadioMode()
 {
+    cancelRadioReconnect();
     purgeAudioPlayerMemory();
     webRadioMode = true;
     radioSelected = 0;
@@ -832,6 +896,7 @@ void enterWebRadioMode()
 
 void exitWebRadioMode()
 {
+    cancelRadioReconnect();
     purgeRadioMemory();
     webRadioMode = false;
     wifiOverlayVisible = false;

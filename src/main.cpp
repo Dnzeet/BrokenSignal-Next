@@ -327,7 +327,12 @@ void loop()
     }
   }
 
-  if (settingsDirty && !isPlaying && !isPaused &&
+  // Flush settings.cfg only when nothing is actively streaming (music or
+  // radio). This debounces rapid changes (e.g. holding volume +/-) into a
+  // single write, and avoids SD writes competing with live audio I/O -
+  // reduces wear and any chance of a write causing an audio hiccup. The
+  // pending change is still written as soon as playback stops or pauses.
+  if (settingsDirty && !isPlaying && !isPaused && !radioIsPlaying &&
       millis() - settingsDirtyMs >= 2000)
   {
     saveSettings();
