@@ -30,6 +30,16 @@
 #define WIFI_SCAN_MAX 10
 #define RADIO_INPUT_MAX 200
 
+// Low-level stream reconnect (inside AudioFileSourceHTTPSStream, triggers on a
+// dropped TCP connection mid-read)
+#define STREAM_RECONNECT_TRIES 3
+#define STREAM_RECONNECT_DELAY_MS 600
+
+// App-level auto-reconnect (triggers when the whole audio generator gives up,
+// e.g. the station closed the connection). Uses exponential backoff capped at
+// 16s: 1s, 2s, 4s, 8s, 16s, 16s...
+#define RADIO_AUTO_RECONNECT_MAX 5
+
 // Compile-time serial debug logging (USB CDC). 0 = off, 1 = log radio events.
 #define DEBUG_SERIAL 0
 
