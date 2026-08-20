@@ -25,10 +25,17 @@
 
 // Web Radio
 #define RADIO_MAX 20
-#define RADIO_HTTP_BUF 24576
+#define RADIO_HTTP_BUF 49152
 #define WIFI_TIMEOUT 15000
 #define WIFI_SCAN_MAX 10
 #define RADIO_INPUT_MAX 200
+
+// Pre-buffer this many bytes into RADIO_HTTP_BUF before starting the codec,
+// so playback doesn't start decoding faster than the network can deliver.
+// Capped at RADIO_PREBUFFER_MAX_WAIT_MS in case the stream is slow/dead -
+// better to start with a partial buffer than hang the UI.
+#define RADIO_PREBUFFER_TARGET (24 * 1024)
+#define RADIO_PREBUFFER_MAX_WAIT_MS 2000
 
 // Low-level stream reconnect (inside AudioFileSourceHTTPSStream, triggers on a
 // dropped TCP connection mid-read)
