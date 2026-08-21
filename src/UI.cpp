@@ -1679,8 +1679,8 @@ void enterEQScreen()
 void exitEQScreen()
 {
     eqScreenVisible = false;
-    settingsDirty = true;
-    settingsDirtyMs = millis();
+    saveSettings();
+    settingsDirty = false;
     if (webRadioMode)
         drawRadioAll();
     else
