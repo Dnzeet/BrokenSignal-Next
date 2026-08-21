@@ -39,6 +39,9 @@ RadioEntry radioList[RADIO_MAX];
 int radioCount = 0;
 int radioSelected = 0;
 int radioScrollTop = 0;
+
+char addUrlStatusMsg[32] = "";
+bool addUrlAwaitingConfirm = false;
 int radioPlaying = -1;
 bool radioIsPlaying = false;
 bool radioForceAac = false;
@@ -90,3 +93,5 @@ unsigned long lastActivityMs = 0;
 bool settingsMenuVisible = false;
 int settingsSel = 0;
 bool debugOverlayVisible = false;
+bool eqScreenVisible = false;
+int eqSel = 0;

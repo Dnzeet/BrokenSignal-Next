@@ -89,6 +89,12 @@ void loop()
       return;
     }
 
+    if (eqScreenVisible)
+    {
+      handleEQInput(ks);
+      return;
+    }
+
     if (debugOverlayVisible)
     {
       for (auto c : ks.word)
@@ -251,6 +257,10 @@ void loop()
       case 'D':
         toggleDebug();
         return;
+      case 'e':
+      case 'E':
+        enterEQScreen();
+        return;
       case 'w':
       case 'W':
         enterWebRadioMode();
@@ -260,7 +270,7 @@ void loop()
   }
 
   static unsigned long lastDraw = 0;
-  if (screenOn && !helpVisible && !settingsMenuVisible && millis() - lastDraw >= 500)
+  if (screenOn && !helpVisible && !settingsMenuVisible && !eqScreenVisible && millis() - lastDraw >= 500)
   {
     lastDraw = millis();
     cursorVisible = !cursorVisible;
@@ -279,6 +289,9 @@ void loop()
         if (radioIsPlaying)
         {
           drawRadioHeader();
+          // Live buffer-fill % in the status bar - only worth the redraw
+          // while actually streaming, otherwise it never changes.
+          drawRadioStatus();
         }
         if (themeIdx == 1 && radioCount > 0)
         {
@@ -311,14 +324,14 @@ void loop()
   if (toastActive && millis() > toastEnd)
   {
     toastActive = false;
-    if (screenOn && !helpVisible && !settingsMenuVisible)
+    if (screenOn && !helpVisible && !settingsMenuVisible && !eqScreenVisible)
       drawAll();
   }
 
   if (hdrMsgEnd > 0 && millis() >= hdrMsgEnd)
   {
     hdrMsgEnd = 0;
-    if (screenOn && !helpVisible && !settingsMenuVisible)
+    if (screenOn && !helpVisible && !settingsMenuVisible && !eqScreenVisible)
     {
       if (webRadioMode)
         drawRadioHeader();
@@ -327,23 +340,30 @@ void loop()
     }
   }
 
-  // Flush settings.cfg only when nothing is actively streaming (music or
-  // radio). This debounces rapid changes (e.g. holding volume +/-) into a
-  // single write, and avoids SD writes competing with live audio I/O -
-  // reduces wear and any chance of a write causing an audio hiccup. The
-  // pending change is still written as soon as playback stops or pauses.
-  if (settingsDirty && !isPlaying && !isPaused && !radioIsPlaying &&
-      millis() - settingsDirtyMs >= 2000)
+  // Flush settings.cfg via two paths:
+  //  - Fast path: 2s after the last change, but only when nothing is
+  //    actively streaming (avoids SD writes competing with live audio I/O).
+  //  - Safety net: if a change has sat unsaved for SETTINGS_FORCE_SAVE_INTERVAL_MS
+  //    (default 5 min) even during a long playback session, flush anyway -
+  //    a crash or power loss shouldn't wipe out settings from an hour of
+  //    listening just because playback never paused.
+  if (settingsDirty)
   {
-    saveSettings();
-    settingsDirty = false;
+    bool idle = !isPlaying && !isPaused && !radioIsPlaying;
+    unsigned long dirtyForMs = millis() - settingsDirtyMs;
+    if ((idle && dirtyForMs >= SETTINGS_IDLE_SAVE_DELAY_MS) ||
+        dirtyForMs >= SETTINGS_FORCE_SAVE_INTERVAL_MS)
+    {
+      saveSettings();
+      settingsDirty = false;
+    }
   }
 
   if (batteryLevel < 0 || millis() - batteryLastMs >= BATTERY_INTERVAL)
   {
     batteryLevel = (int)min((int32_t)99, M5.Power.getBatteryLevel());
     batteryLastMs = millis();
-    if (screenOn && !helpVisible && !settingsMenuVisible)
+    if (screenOn && !helpVisible && !settingsMenuVisible && !eqScreenVisible)
     {
       if (webRadioMode)
         drawRadioStatus();
@@ -354,7 +374,7 @@ void loop()
 
   // Battery-safe auto screen off: only when idle, never over an open menu/overlay.
   if (screenOn && autoScreenOffSec > 0 && !settingsMenuVisible && !helpVisible &&
-      !debugOverlayVisible &&
+      !eqScreenVisible && !debugOverlayVisible &&
       !wifiOverlayVisible && !wifiPassOverlayVisible && !addUrlOverlayVisible &&
       !addNameOverlayVisible && !removeConfirmVisible &&
       millis() - lastActivityMs >= (unsigned long)autoScreenOffSec * 1000UL)

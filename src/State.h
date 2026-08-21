@@ -54,6 +54,10 @@ extern RadioEntry radioList[RADIO_MAX];
 extern int radioCount;
 extern int radioSelected;
 extern int radioScrollTop;
+
+// Add-station URL validation (format check + live connectivity test)
+extern char addUrlStatusMsg[32];
+extern bool addUrlAwaitingConfirm;
 extern int radioPlaying;
 extern bool radioIsPlaying;
 
@@ -107,3 +111,5 @@ extern unsigned long lastActivityMs;
 extern bool settingsMenuVisible;
 extern int settingsSel;
 extern bool debugOverlayVisible;
+extern bool eqScreenVisible;
+extern int eqSel;

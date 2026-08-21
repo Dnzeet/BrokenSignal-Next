@@ -359,6 +359,9 @@ void saveSettings()
     f.printf("wifipowersave=%d\n", wifiPowerSave ? 1 : 0);
     f.printf("brightness=%d\n", screenBrightness);
     f.printf("autoscreenoff=%d\n", autoScreenOffSec);
+    f.printf("eqenabled=%d\n", eqEnabled ? 1 : 0);
+    for (int i = 0; i < EQ_BAND_COUNT; i++)
+        f.printf("eqband%d=%d\n", i, eqGainDb[i]);
     f.close();
 }
 
@@ -520,6 +523,16 @@ void loadSettings()
             screenBrightness = (uint8_t)val;
         if (key == "autoscreenoff" && val >= 0 && val <= 600)
             autoScreenOffSec = (uint16_t)val;
+        if (key == "eqenabled")
+            eqEnabled = (val != 0);
+        for (int i = 0; i < EQ_BAND_COUNT; i++)
+        {
+            char bandKey[10];
+            snprintf(bandKey, sizeof(bandKey), "eqband%d", i);
+            if (key == bandKey && val >= -12 && val <= 12)
+                eqGainDb[i] = (int8_t)val;
+        }
     }
     f.close();
+    eqRecompute(eqLastSampleRate);
 }

@@ -527,8 +527,23 @@ void showAddUrlOverlay()
 {
     inputBuf[0] = '\0';
     inputLen = 0;
+    addUrlStatusMsg[0] = '\0';
+    addUrlAwaitingConfirm = false;
     addUrlOverlayVisible = true;
     drawAddUrlOverlay();
+}
+
+// Opens the URL just far enough to confirm the server responds, then closes
+// it right away - reuses the exact same connect logic (headers, timeout,
+// TLS handling) as real playback, so a pass here is a real signal, not just
+// a format guess. Blocks for up to ~5s (the same timeout playback itself
+// uses), which is fine for a one-off "adding a station" action.
+bool testRadioUrl(const String &url)
+{
+    AudioFileSourceHTTPSStream testSrc;
+    bool ok = testSrc.open(url.c_str());
+    testSrc.close();
+    return ok;
 }
 
 void showAddNameOverlay(const String &defaultName)
@@ -639,20 +654,30 @@ void handleOverlayInput(Keyboard_Class::KeysState &ks)
     }
     else if (addUrlOverlayVisible)
     {
+        bool textChanged = false;
         for (auto c : ks.word)
         {
             if (c >= 32 && c < 127 && inputLen < RADIO_INPUT_MAX)
             {
                 inputBuf[inputLen++] = c;
                 inputBuf[inputLen] = '\0';
-                drawAddUrlOverlay(true);
+                textChanged = true;
             }
+        }
+        if (textChanged)
+        {
+            // Editing the URL invalidates any pending "add anyway?" confirm
+            addUrlAwaitingConfirm = false;
+            addUrlStatusMsg[0] = '\0';
+            drawAddUrlOverlay(true);
         }
         if (ks.del)
         {
             if (inputLen > 0)
             {
                 inputBuf[--inputLen] = '\0';
+                addUrlAwaitingConfirm = false;
+                addUrlStatusMsg[0] = '\0';
                 drawAddUrlOverlay(true);
             }
             else
@@ -664,9 +689,47 @@ void handleOverlayInput(Keyboard_Class::KeysState &ks)
         if (ks.enter && inputLen > 0)
         {
             inputSaved = String(inputBuf);
-            addUrlOverlayVisible = false;
-            String defName = generateRadioName(inputSaved, radioCount + 1);
-            showAddNameOverlay(defName);
+
+            if (addUrlAwaitingConfirm)
+            {
+                // Connectivity test failed last time, but user pressed ENTER
+                // again to add it anyway (e.g. a stream that dislikes quick
+                // connect/disconnect probes, or a temporarily-down server).
+                addUrlAwaitingConfirm = false;
+                addUrlOverlayVisible = false;
+                addUrlStatusMsg[0] = '\0';
+                String defName = generateRadioName(inputSaved, radioCount + 1);
+                showAddNameOverlay(defName);
+            }
+            else if (!(inputSaved.startsWith("http://") || inputSaved.startsWith("https://")) || inputSaved.length() < 12)
+            {
+                strncpy(addUrlStatusMsg, "INVALID URL FORMAT", sizeof(addUrlStatusMsg) - 1);
+                addUrlStatusMsg[sizeof(addUrlStatusMsg) - 1] = '\0';
+                drawAddUrlOverlay(true);
+            }
+            else
+            {
+                strncpy(addUrlStatusMsg, "TESTING...", sizeof(addUrlStatusMsg) - 1);
+                addUrlStatusMsg[sizeof(addUrlStatusMsg) - 1] = '\0';
+                drawAddUrlOverlay(true);
+
+                bool reachable = testRadioUrl(inputSaved);
+
+                if (reachable)
+                {
+                    addUrlOverlayVisible = false;
+                    addUrlStatusMsg[0] = '\0';
+                    String defName = generateRadioName(inputSaved, radioCount + 1);
+                    showAddNameOverlay(defName);
+                }
+                else
+                {
+                    strncpy(addUrlStatusMsg, "NO RESPONSE. ENTER=ADD ANYWAY", sizeof(addUrlStatusMsg) - 1);
+                    addUrlStatusMsg[sizeof(addUrlStatusMsg) - 1] = '\0';
+                    addUrlAwaitingConfirm = true;
+                    drawAddUrlOverlay(true);
+                }
+            }
         }
     }
     else if (addNameOverlayVisible)
@@ -878,6 +941,10 @@ void handleRadioInput(Keyboard_Class::KeysState &ks)
         case 'd':
         case 'D':
             toggleDebug();
+            return;
+        case 'e':
+        case 'E':
+            enterEQScreen();
             return;
         case 'i':
         case 'I':

@@ -6,87 +6,10 @@
 
 void drawSplash(const char *statusLine)
 {
-    uint16_t bg = rgb(2, 6, 4);
-    uint16_t mGreen1 = rgb(0, 255, 65);
-    uint16_t mGreen2 = rgb(0, 140, 30);
-    uint16_t mGreen3 = rgb(0, 50, 10);
-    uint16_t cyan = rgb(0, 245, 255);
-    uint16_t magenta = rgb(255, 45, 120);
-    uint16_t red = rgb(255, 30, 50);
-    uint16_t yellow = rgb(245, 230, 66);
-
-    M5Cardputer.Display.fillScreen(bg);
-
-    for (int x = 4; x < SCREEN_W; x += 12)
-    {
-        int StreamStart = (x * 7) % (SCREEN_H / 2);
-        int StreamLen = 30 + ((x * 13) % 60);
-
-        for (int y = StreamStart; y < StreamStart + StreamLen && y < SCREEN_H; y += 6)
-        {
-            uint16_t dotColor = (y < StreamStart + 12) ? mGreen1 : ((y < StreamStart + 35) ? mGreen2 : mGreen3);
-
-            M5Cardputer.Display.drawFastVLine(x, y, 3, dotColor);
-        }
-    }
-
-    M5Cardputer.Display.fillRect(0, 22, 240, 2, mGreen2);
-    M5Cardputer.Display.fillRect(0, 23, 120, 2, mGreen3);
-    M5Cardputer.Display.fillRect(18, 44, 80, 1, magenta);
-    M5Cardputer.Display.fillRect(140, 44, 60, 1, mGreen2);
-    M5Cardputer.Display.fillRect(0, 88, 240, 2, mGreen2);
-    M5Cardputer.Display.fillRect(60, 89, 180, 1, mGreen3);
-    M5Cardputer.Display.fillRect(10, 105, 50, 1, red);
-    M5Cardputer.Display.fillRect(180, 105, 40, 1, mGreen2);
-
-    M5Cardputer.Display.drawRect(0, 0, SCREEN_W, SCREEN_H, mGreen2);
-    M5Cardputer.Display.drawRect(2, 2, SCREEN_W - 4, SCREEN_H - 4, mGreen3);
-
-    M5Cardputer.Display.drawFastHLine(0, 0, 10, cyan);
-    M5Cardputer.Display.drawFastVLine(0, 0, 10, cyan);
-    M5Cardputer.Display.drawFastHLine(SCREEN_W - 10, 0, 10, cyan);
-    M5Cardputer.Display.drawFastVLine(SCREEN_W - 1, 0, 10, cyan);
-    M5Cardputer.Display.drawFastHLine(0, SCREEN_H - 1, 10, cyan);
-    M5Cardputer.Display.drawFastVLine(0, SCREEN_H - 10, 10, cyan);
-    M5Cardputer.Display.drawFastHLine(SCREEN_W - 10, SCREEN_H - 1, 10, cyan);
-    M5Cardputer.Display.drawFastVLine(SCREEN_W - 1, SCREEN_H - 10, 10, cyan);
-
-    M5Cardputer.Display.setTextDatum(middle_left);
-    M5Cardputer.Display.setTextColor(mGreen2);
-    M5Cardputer.Display.drawString("// SYS:BOOT //", 8, 10, 1);
-
-    M5Cardputer.Display.setTextDatum(middle_right);
-    M5Cardputer.Display.setTextColor(red);
-    M5Cardputer.Display.drawString("ERR_SIG", SCREEN_W - 8, 10, 1);
-
-    int titleY1 = 46;
-    int titleY2 = 68;
-    int titleY3 = 90;
+    M5Cardputer.Display.fillScreen(TFT_BLACK);
+    M5Cardputer.Display.setTextColor(TFT_WHITE);
     M5Cardputer.Display.setTextDatum(middle_center);
-
-    M5Cardputer.Display.setTextColor(mGreen3);
-    M5Cardputer.Display.drawString("BROKEN", SCREEN_W / 2 - 2, titleY1, 4);
-    M5Cardputer.Display.setTextColor(magenta);
-    M5Cardputer.Display.drawString("BROKEN", SCREEN_W / 2 + 1, titleY1, 4);
-    M5Cardputer.Display.setTextColor(rgb(230, 255, 235));
-    M5Cardputer.Display.drawString("BROKEN", SCREEN_W / 2, titleY1, 4);
-
-    M5Cardputer.Display.setTextColor(mGreen3);
-    M5Cardputer.Display.drawString("SIGNAL", SCREEN_W / 2 - 1, titleY2, 4);
-    M5Cardputer.Display.setTextColor(cyan);
-    M5Cardputer.Display.drawString("SIGNAL", SCREEN_W / 2 + 1, titleY2, 4);
-    M5Cardputer.Display.setTextColor(rgb(200, 255, 210));
-    M5Cardputer.Display.drawString("SIGNAL", SCREEN_W / 2, titleY2, 4);
-
-    M5Cardputer.Display.setTextColor(magenta);
-    M5Cardputer.Display.drawString("NEXT", SCREEN_W / 2 - 1, titleY3, 4);
-    M5Cardputer.Display.setTextColor(mGreen2);
-    M5Cardputer.Display.drawString("NEXT", SCREEN_W / 2 + 1, titleY3, 4);
-    M5Cardputer.Display.setTextColor(yellow);
-    M5Cardputer.Display.drawString("NEXT", SCREEN_W / 2, titleY3, 4);
-
-    M5Cardputer.Display.setTextColor(mGreen1);
-    M5Cardputer.Display.drawString(statusLine, SCREEN_W / 2, SCREEN_H - 12, 1);
+    M5Cardputer.Display.drawString(statusLine, SCREEN_W / 2, SCREEN_H / 2, 2);
 }
 void drawAll()
 {
@@ -870,6 +793,7 @@ void drawHelp()
             {"M", "Settings menu"},
             {"D", "Debug overlay"},
             {"I", "Force AAC codec"},
+            {"E", "Equalizer"},
             {"H", "Close / Open help"},
         };
         const int rows_n = sizeof(rows) / sizeof(rows[0]);
@@ -903,6 +827,7 @@ void drawHelp()
             {"O", "Screen on / off"},
             {"M", "Settings menu"},
             {"D", "Debug overlay"},
+            {"E", "Equalizer"},
             {"H", "Close / Open help"},
         };
         const int rows_n = sizeof(rows) / sizeof(rows[0]);
@@ -1206,8 +1131,32 @@ void drawRadioStatus()
     int volPct = (volume * 100) / 255;
     statusCanvas.fillSprite(T->hdrBg);
 
-    const char *streamLabel = radioIsPlaying ? "LIVE" : "IDLE";
-    uint16_t streamCol = radioIsPlaying ? T->accent1 : T->textDim;
+    // When live, show buffer fill % instead of a plain "LIVE" label - lets
+    // you see buffering happening on the main screen, not just the debug
+    // overlay. Falls back to plain "LIVE"/"IDLE" if there's no buffer yet.
+    char streamLabelBuf[12];
+    const char *streamLabel;
+    uint16_t streamCol;
+    if (radioIsPlaying)
+    {
+        streamCol = T->accent1;
+        if (radioBuf)
+        {
+            uint32_t fill = radioBuf->getFillLevel();
+            int pct = (int)min(100u, (unsigned)(fill * 100 / RADIO_HTTP_BUF));
+            snprintf(streamLabelBuf, sizeof(streamLabelBuf), "LIVE %d%%", pct);
+            streamLabel = streamLabelBuf;
+        }
+        else
+        {
+            streamLabel = "LIVE";
+        }
+    }
+    else
+    {
+        streamLabel = "IDLE";
+        streamCol = T->textDim;
+    }
 
     if (themeIdx == 0)
     {
@@ -1484,6 +1433,18 @@ void drawAddUrlOverlay(bool inputOnly)
     D.setTextColor(T->textBright, T->hdrBg);
     D.drawString(disp, 10, 53, 1);
     D.setTextColor(T->textBright);
+
+    // Format/connectivity feedback from handleOverlayInput (TESTING...,
+    // INVALID URL FORMAT, NO RESPONSE...). Cleared/redrawn every call so
+    // stale messages don't linger once the user starts editing again.
+    D.fillRect(6, 117, SCREEN_W - 12, 11, T->bg);
+    if (addUrlStatusMsg[0])
+    {
+        D.setTextDatum(middle_center);
+        D.setTextColor(T->accent2);
+        D.drawString(addUrlStatusMsg, SCREEN_W / 2, 123, 1);
+        D.setTextColor(T->textBright);
+    }
 }
 
 void drawAddNameOverlay(bool inputOnly)
@@ -1701,6 +1662,139 @@ void handleSettingsInput(Keyboard_Class::KeysState &ks)
     }
     if (changed)
         drawSettingsMenu();
+}
+
+// ---------------------------------------------------------------------------
+// 5-band graphic EQ screen (toggle with 'E' in music and radio modes)
+// Applies to both the MP3/M4A player and web radio, since both share the
+// same AudioOutputM5Speaker instance where the filtering happens.
+// ---------------------------------------------------------------------------
+void enterEQScreen()
+{
+    eqScreenVisible = true;
+    eqSel = 0;
+    drawEQScreen();
+}
+
+void exitEQScreen()
+{
+    eqScreenVisible = false;
+    settingsDirty = true;
+    settingsDirtyMs = millis();
+    if (webRadioMode)
+        drawRadioAll();
+    else
+        drawAll();
+}
+
+void drawEQScreen()
+{
+    auto &D = M5Cardputer.Display;
+    drawOverlayFrame(eqEnabled ? "EQUALIZER [ON]" : "EQUALIZER [OFF]");
+
+    D.setTextDatum(middle_right);
+    D.setTextColor(T->textDim);
+    D.drawString(";/.=band +/-=gain", SCREEN_W - 6, 13, 1);
+
+    const char *bandLabels[EQ_BAND_COUNT] = {"60", "250", "1K", "4K", "12K"};
+    const int baseY = 65;   // 0dB baseline
+    const int halfH = 34;   // pixels for +-12dB
+    const int barW = 18;
+    const int colGap = SCREEN_W / EQ_BAND_COUNT;
+
+    D.drawFastHLine(14, baseY, SCREEN_W - 28, T->textDim);
+
+    for (int i = 0; i < EQ_BAND_COUNT; i++)
+    {
+        int cx = colGap * i + colGap / 2;
+        int gain = eqGainDb[i];
+        int barH = (int)((float)abs(gain) / 12.0f * halfH);
+        bool sel = (i == eqSel);
+        uint16_t barCol = sel ? T->accent1 : T->accent3;
+
+        if (gain >= 0)
+            D.fillRect(cx - barW / 2, baseY - barH, barW, max(barH, 1), barCol);
+        else
+            D.fillRect(cx - barW / 2, baseY, barW, max(barH, 1), barCol);
+
+        if (sel)
+            D.drawRect(cx - barW / 2 - 2, baseY - halfH - 2, barW + 4, halfH * 2 + 4, T->accent2);
+
+        D.setTextDatum(top_center);
+        D.setTextColor(sel ? T->accent2 : T->textMid);
+        D.drawString(bandLabels[i], cx, baseY + halfH + 6, 1);
+
+        if (sel)
+        {
+            char gbuf[8];
+            snprintf(gbuf, sizeof(gbuf), "%+ddB", gain);
+            D.setTextDatum(bottom_center);
+            D.setTextColor(T->accent1);
+            D.drawString(gbuf, cx, baseY - halfH - 6, 1);
+        }
+    }
+
+    D.setTextDatum(middle_center);
+    D.setTextColor(T->textDim);
+    D.drawString("ENTER=on/off  DEL=exit", SCREEN_W / 2, SCREEN_H - 8, 1);
+}
+
+void handleEQInput(Keyboard_Class::KeysState &ks)
+{
+    if (ks.del)
+    {
+        exitEQScreen();
+        return;
+    }
+    bool changed = false;
+    for (auto c : ks.word)
+    {
+        switch (c)
+        {
+        case ';':
+            eqSel = (eqSel - 1 + EQ_BAND_COUNT) % EQ_BAND_COUNT;
+            changed = true;
+            break;
+        case '.':
+            eqSel = (eqSel + 1) % EQ_BAND_COUNT;
+            changed = true;
+            break;
+        case '+':
+        case '=':
+            if (eqGainDb[eqSel] < 12)
+            {
+                eqGainDb[eqSel]++;
+                eqRecompute(eqLastSampleRate);
+                settingsDirty = true;
+                settingsDirtyMs = millis();
+            }
+            changed = true;
+            break;
+        case '-':
+            if (eqGainDb[eqSel] > -12)
+            {
+                eqGainDb[eqSel]--;
+                eqRecompute(eqLastSampleRate);
+                settingsDirty = true;
+                settingsDirtyMs = millis();
+            }
+            changed = true;
+            break;
+        case 'e':
+        case 'E':
+            exitEQScreen();
+            return;
+        }
+    }
+    if (ks.enter)
+    {
+        eqEnabled = !eqEnabled;
+        settingsDirty = true;
+        settingsDirtyMs = millis();
+        changed = true;
+    }
+    if (changed)
+        drawEQScreen();
 }
 
 // ---------------------------------------------------------------------------

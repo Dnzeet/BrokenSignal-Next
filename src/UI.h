@@ -30,4 +30,8 @@ void exitSettingsMenu();
 void drawSettingsMenu();
 void handleSettingsInput(Keyboard_Class::KeysState &ks);
 void toggleDebug();
+void enterEQScreen();
+void exitEQScreen();
+void drawEQScreen();
+void handleEQInput(Keyboard_Class::KeysState &ks);
 void drawDebug();
