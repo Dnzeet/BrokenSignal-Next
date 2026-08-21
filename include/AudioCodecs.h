@@ -5,6 +5,7 @@
 #include <AudioFileSource.h>
 #include <AudioOutput.h>
 #include <M5Unified.h>
+#include "EQFilter.h"
 
 class AudioFileSourceM4A : public AudioFileSource
 {
@@ -467,6 +468,7 @@ public:
     {
         _wi = 0;
         _wv = 0;
+        eqResetHistory();
         return true;
     }
     bool ConsumeSample(int16_t sample[2]) override
@@ -476,6 +478,8 @@ public:
             flush();
             return false;
         }
+        if (eqEnabled)
+            eqProcessSample(sample);
         _buf[_wi][_wv++] = sample[0];
         _buf[_wi][_wv++] = sample[1];
         return true;
@@ -498,6 +502,7 @@ public:
     bool SetRate(int hz) override
     {
         hertz = hz;
+        eqRecompute((float)hz);
         return true;
     }
     bool SetChannels(int ch) override
