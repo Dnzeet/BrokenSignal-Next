@@ -926,6 +926,9 @@ void handleRadioInput(Keyboard_Class::KeysState &ks)
         case '5':
             setTheme(4);
             break;
+        case '6':
+            setTheme(5);
+            break;
         case 'o':
         case 'O':
             toggleScreen();

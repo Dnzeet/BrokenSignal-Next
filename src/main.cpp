@@ -233,6 +233,9 @@ void loop()
       case '5':
         setTheme(4);
         break;
+      case '6':
+        setTheme(5);
+        break;
       case 'r':
       case 'R':
         cycleRepeat();

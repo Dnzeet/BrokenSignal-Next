@@ -66,7 +66,7 @@ void toggleShuffle()
 
 void setTheme(uint8_t idx)
 {
-    if (idx >= 5)
+    if (idx >= 6)
         return;
     themeIdx = idx;
     T = THEMES[idx];
@@ -190,6 +190,29 @@ void drawHeader()
 
         for (int x = 0; x < SCREEN_W; x += 5)
             D.drawFastHLine(x, HEADER_H - 1, 3, T->textDim);
+    }
+    else if (themeIdx == 5)
+    {
+        // MODERN LIGHT: minimal - no borders/glyphs, just clean type.
+        String stateTag;
+        if (!isPlaying && !isPaused && currentFolderIdx != 0)
+            stateTag = isRecentView ? "Recent" : folderName(viewFolder, 16);
+        else
+            stateTag = isPlaying ? "Now Playing" : (isPaused ? "Paused" : "Stopped");
+
+        D.setTextDatum(top_left);
+        D.setTextColor(T->textDim);
+        D.drawString(stateTag, 10, 5, 1);
+
+        D.setTextColor(T->accent2);
+        D.setTextDatum(top_right);
+        D.drawString(countStr, SCREEN_W - 10, 5, 1);
+
+        D.setTextColor(T->textBright);
+        D.setTextDatum(top_left);
+        D.drawString(name, 10, 17, 2);
+
+        D.drawFastHLine(10, HEADER_H - 3, SCREEN_W - 20, T->barBg);
     }
     else
     {
@@ -342,6 +365,14 @@ void drawTrackList()
                              : isFolder ? rgb(10, 8, 0)
                                         : T->bg;
             M5Cardputer.Display.fillRect(0, y, SCREEN_W, LIST_ITEM_H, rowBg);
+        }
+        else if (themeIdx == 5)
+        {
+            // MODERN LIGHT: flat rows, no folder tint - selection reads via
+            // a soft rounded pill instead of a background block.
+            M5Cardputer.Display.fillRect(0, y, SCREEN_W, LIST_ITEM_H, T->bg);
+            if (sel)
+                M5Cardputer.Display.fillRoundRect(4, y + 1, SCREEN_W - 8, LIST_ITEM_H - 2, 5, T->selRow);
         }
         else
         {
@@ -751,6 +782,34 @@ void drawStatus()
             statusCanvas.drawString(bbuf, sepX + 8, STATUS_H / 2, 1);
         }
     }
+    else if (themeIdx == 5)
+    {
+        // MODERN LIGHT: big rounded pill progress bar, no clutter.
+        const int BAR_X = 62, BAR_W = 130, BAR_H = 6;
+        const int BAR_Y = (STATUS_H - BAR_H) / 2;
+
+        statusCanvas.setTextDatum(middle_left);
+        statusCanvas.setTextColor(T->textMid);
+        statusCanvas.drawString(formatTime(elapsed), 4, STATUS_H / 2, 1);
+
+        statusCanvas.fillRoundRect(BAR_X, BAR_Y, BAR_W, BAR_H, BAR_H / 2, T->barBg);
+        int fill = (int)(BAR_W * prog);
+        if (fill > BAR_H)
+            statusCanvas.fillRoundRect(BAR_X, BAR_Y, fill, BAR_H, BAR_H / 2, T->accent1);
+        else if (fill > 0)
+            statusCanvas.fillCircle(BAR_X + BAR_H / 2, BAR_Y + BAR_H / 2, BAR_H / 2, T->accent1);
+
+        statusCanvas.setTextDatum(middle_right);
+        statusCanvas.setTextColor(T->textMid);
+        statusCanvas.drawString(formatTime(trackDurationMs), SCREEN_W - 4, STATUS_H / 2, 1);
+
+        // Tiny play/pause glyph as a soft rounded pill, top-right.
+        const char *icon = isPlaying ? ">" : (isPaused ? "||" : "-");
+        statusCanvas.fillRoundRect(SCREEN_W - 24, 1, 20, 12, 6, isPlaying ? T->accent1 : T->barBg);
+        statusCanvas.setTextDatum(middle_center);
+        statusCanvas.setTextColor(isPlaying ? T->hdrBg : T->textDim);
+        statusCanvas.drawString(icon, SCREEN_W - 14, 7, 1);
+    }
 
     statusCanvas.pushSprite(0, STATUS_Y);
 }
@@ -788,7 +847,7 @@ void drawHelp()
             {"R", "Reconnect stream"},
             {"W / DEL", "Back to music player"},
             {"+ / -", "Volume up / down"},
-            {"1-5", "Switch theme"},
+            {"1-6", "Switch theme"},
             {"O", "Screen on / off"},
             {"M", "Settings menu"},
             {"D", "Debug overlay"},
@@ -823,7 +882,7 @@ void drawHelp()
             {"W", "Switch to Web Radio"},
             {"R", "Cycle repeat mode"},
             {"S", "Toggle shuffle"},
-            {"1-5", "Switch theme"},
+            {"1-6", "Switch theme"},
             {"O", "Screen on / off"},
             {"M", "Settings menu"},
             {"D", "Debug overlay"},
@@ -918,6 +977,20 @@ void drawRadioHeader()
         for (int x = 0; x < SCREEN_W; x += 5)
             D.drawFastHLine(x, HEADER_H - 1, 3, T->textDim);
     }
+    else if (themeIdx == 5)
+    {
+        // MODERN LIGHT: minimal - no borders/glyphs.
+        D.setTextDatum(top_left);
+        D.setTextColor(T->textDim);
+        D.drawString(radioIsPlaying ? "On Air" : "Web Radio", 10, 5, 1);
+        D.setTextColor(wifiConnected ? T->accent2 : T->accent1);
+        D.setTextDatum(top_right);
+        D.drawString(wifiStatus, SCREEN_W - 10, 5, 1);
+        D.setTextColor(T->textBright);
+        D.setTextDatum(top_left);
+        D.drawString(stationLine, 10, 17, 2);
+        D.drawFastHLine(10, HEADER_H - 3, SCREEN_W - 20, T->barBg);
+    }
     else
     {
         D.fillRect(0, 0, 3, HEADER_H, T->accent1);
@@ -986,6 +1059,12 @@ void drawRadioRow(int idx)
     else if (themeIdx == 1)
     {
         D.fillRect(0, y, rowW, LIST_ITEM_H, sel ? T->selRow : T->bg);
+    }
+    else if (themeIdx == 5)
+    {
+        D.fillRect(0, y, rowW, LIST_ITEM_H, T->bg);
+        if (sel)
+            D.fillRoundRect(4, y + 1, rowW - 8, LIST_ITEM_H - 2, 5, T->selRow);
     }
     else
     {
@@ -1270,6 +1349,21 @@ void drawRadioStatus()
             statusCanvas.setTextColor(T->accent2);
             statusCanvas.drawString(bbuf, SCREEN_W - 2, 13, 1);
         }
+    }
+    else if (themeIdx == 5)
+    {
+        // MODERN LIGHT: soft rounded pills for add/remove hints and buffer %.
+        statusCanvas.setTextDatum(middle_left);
+        statusCanvas.setTextColor(T->textDim);
+        statusCanvas.drawString("A add   X remove", 6, STATUS_H / 2, 1);
+        statusCanvas.setTextDatum(middle_center);
+        statusCanvas.setTextColor(radioIsPlaying ? T->accent1 : T->textDim);
+        statusCanvas.drawString(streamLabel, SCREEN_W / 2, STATUS_H / 2, 1);
+        char vbuf[8];
+        snprintf(vbuf, sizeof(vbuf), "%d%%", volPct);
+        statusCanvas.setTextDatum(middle_right);
+        statusCanvas.setTextColor(T->textMid);
+        statusCanvas.drawString(vbuf, SCREEN_W - 6, STATUS_H / 2, 1);
     }
     else
     {

@@ -501,7 +501,7 @@ void loadSettings()
             continue;
         String key = line.substring(0, eq);
         int val = line.substring(eq + 1).toInt();
-        if (key == "theme" && val >= 0 && val < 5)
+        if (key == "theme" && val >= 0 && val < 6)
         {
             themeIdx = val;
             T = THEMES[val];
