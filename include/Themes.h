@@ -77,4 +77,17 @@ static const Theme T_ASH = {
     rgb(30, 30, 30),    // selRow
     "ASH"};
 
-static const Theme *THEMES[5] = {&T_NEON, &T_TERM, &T_CORP, &T_MIAMI, &T_ASH};
+static const Theme T_LIGHT = {
+    rgb(242, 242, 245), // bg
+    rgb(255, 255, 255), // hdrBg
+    rgb(250, 45, 85),   // accent1 (soft coral/pink)
+    rgb(130, 140, 160), // accent2 (muted slate)
+    rgb(255, 159, 110), // accent3 (soft peach)
+    rgb(28, 28, 30),    // textBright (near-black)
+    rgb(120, 120, 128), // textMid
+    rgb(199, 199, 204), // textDim
+    rgb(225, 225, 230), // barBg
+    rgb(255, 232, 235), // selRow (light coral tint)
+    "MODERN LIGHT"};
+
+static const Theme *THEMES[6] = {&T_NEON, &T_TERM, &T_CORP, &T_MIAMI, &T_ASH, &T_LIGHT};
